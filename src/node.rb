@@ -1,6 +1,6 @@
 class Node
   attr_accessor :label
-  attr_reader :boundary, :parent, :parent_positive
+  attr_reader :boundary, :parent, :parent_positive, :position
 
   def initialize(label, parent = nil, parent_positive = nil)
     @label = label
@@ -14,6 +14,14 @@ class Node
 
   def dot(a, b)
     (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])
+  end
+
+  def interior_leaf_count
+    if @position
+      @positive.interior_leaf_count + @negative.interior_leaf_count
+    else
+      @label ? 1 : 0
+    end
   end
 
   def intersect_with_universe
@@ -73,6 +81,14 @@ class Node
     negative
   end
 
+  def leaf_count
+    if @position.nil?
+      1
+    else
+      @positive.leaf_count + @negative.leaf_count
+    end
+  end
+
   def on_positive_side?(p, position = nil)
     position ||= @position
     position_length = Math.sqrt(dot(position, position))
@@ -123,16 +139,17 @@ class Node
   end
 
   def recursively_copy_into(other_node)
-    if @position
-      other_node.label ||= @label
+    if @position.nil?
+      other_node.label = other_node.label || @label
     else
-      positive, negative = other_node.split(@position, false, false)
+      positive, negative = other_node.split(@position, other_node.label, other_node.label)
       @positive.recursively_copy_into(positive)
       @negative.recursively_copy_into(negative)
     end
   end
 
   def recursive_partition_for_negative(other)
+    return self unless @position
     # Naming convention, first element is our position relative to them, second is their position relative to us
     case classify(other)
     when :neg_neg
@@ -153,6 +170,7 @@ class Node
   end
 
   def recursive_partition_for_positive(other)
+    return self unless @position
     case classify(other)
     when :neg_neg
       return @negative.recursive_partition_for_positive(other)
@@ -216,6 +234,7 @@ class Node
 
     if their_relations.all?{|o| o.nil?} # All on boundary
       return :on_parallel # Note that this is because current representation doesn't permit anti-parallel arrangement
+    else
       if their_relations.all?{|o| o != false} # All positive or on boundary
         if our_relations.all?{|o| o != false}
           return :pos_pos
