@@ -2,6 +2,8 @@ class Node
   attr_accessor :label
   attr_reader :boundary, :parent, :parent_positive, :position
 
+  UNIVERSE_SIZE = 10000.0
+
   def initialize(label, parent = nil, parent_positive = nil)
     @label = label
     @positive = nil
@@ -10,6 +12,41 @@ class Node
     @boundary = nil
     @parent = parent
     @parent_positive = parent_positive
+  end
+
+  def boundary_representation
+    v_ppp = [UNIVERSE_SIZE, UNIVERSE_SIZE, UNIVERSE_SIZE]
+    v_ppm = [UNIVERSE_SIZE, UNIVERSE_SIZE, -UNIVERSE_SIZE]
+    v_pmp = [UNIVERSE_SIZE, -UNIVERSE_SIZE, UNIVERSE_SIZE]
+    v_pmm = [UNIVERSE_SIZE, -UNIVERSE_SIZE, -UNIVERSE_SIZE]
+    v_mpp = [-UNIVERSE_SIZE, UNIVERSE_SIZE, UNIVERSE_SIZE]
+    v_mpm = [-UNIVERSE_SIZE, UNIVERSE_SIZE, -UNIVERSE_SIZE]
+    v_mmp = [-UNIVERSE_SIZE, -UNIVERSE_SIZE, UNIVERSE_SIZE]
+    v_mmm = [-UNIVERSE_SIZE, -UNIVERSE_SIZE, -UNIVERSE_SIZE]
+
+    e_xpp = [v_ppp, v_mpp]
+    e_xpm = [v_ppm, v_mpm]
+    e_xmp = [v_pmp, v_ppm]
+    e_xmm = [v_pmm, v_mmm]
+    e_pxp = [v_ppp, v_pmp]
+    e_pxm = [v_ppm, v_pmm]
+    e_mxp = [v_mpp, v_mmp]
+    e_mxm = [v_mpm, v_mmm]
+    e_ppx = [v_ppp, v_ppm]
+    e_pmx = [v_pmp, v_pmm]
+    e_mpx = [v_mpp, v_mpm]
+    e_mmx = [v_mmp, v_mmm]
+
+    f_xp = [e_pxp, e_pxm, e_ppx, e_pmx]
+    f_xm = [e_mxp, e_mxm, e_mpx, e_mmx]
+    f_yp = [e_xpp, e_xpm, e_ppx, e_mpx]
+    f_ym = [e_xmp, e_xmm, e_pmx, e_mmx]
+    f_zp = [e_xpp, e_xmp, e_pxp, e_mxp]
+    f_zm = [e_xpm, e_xmm, e_pxm, e_mxm]
+
+    cells = [[f_xp, f_xm, f_yp, f_ym, f_zp, f_zm]]
+
+    recursive_partition_cells(cells, 0)
   end
 
   def dot(a, b)
@@ -25,8 +62,6 @@ class Node
   end
 
   def intersect_with_universe
-    universe_size = 10000.0
-
     if (@position[1] == 0) && (@position[2] == 0)
       basis_1 = [0.0, 1.0, 0.0]
     else
@@ -52,32 +87,32 @@ class Node
 
     vertices = []
     vertices << [
-      @position[0] + 10 * universe_size * basis_1[0] / basis_1_norm,
-      @position[1] + 10 * universe_size * basis_1[1] / basis_1_norm,
-      @position[2] + 10 * universe_size * basis_1[2] / basis_1_norm
+      @position[0] + 10 * UNIVERSE_SIZE * basis_1[0] / basis_1_norm,
+      @position[1] + 10 * UNIVERSE_SIZE * basis_1[1] / basis_1_norm,
+      @position[2] + 10 * UNIVERSE_SIZE * basis_1[2] / basis_1_norm
     ]
     vertices << [
-      @position[0] + 10 * universe_size * basis_2[0] / basis_2_norm,
-      @position[1] + 10 * universe_size * basis_2[1] / basis_2_norm,
-      @position[2] + 10 * universe_size * basis_2[2] / basis_2_norm
+      @position[0] + 10 * UNIVERSE_SIZE * basis_2[0] / basis_2_norm,
+      @position[1] + 10 * UNIVERSE_SIZE * basis_2[1] / basis_2_norm,
+      @position[2] + 10 * UNIVERSE_SIZE * basis_2[2] / basis_2_norm
     ]
     vertices << [
-      @position[0] - 10 * universe_size * basis_1[0] / basis_1_norm,
-      @position[1] - 10 * universe_size * basis_1[1] / basis_1_norm,
-      @position[2] - 10 * universe_size * basis_1[2] / basis_1_norm
+      @position[0] - 10 * UNIVERSE_SIZE * basis_1[0] / basis_1_norm,
+      @position[1] - 10 * UNIVERSE_SIZE * basis_1[1] / basis_1_norm,
+      @position[2] - 10 * UNIVERSE_SIZE * basis_1[2] / basis_1_norm
     ]
     vertices << [
-      @position[0] - 10 * universe_size * basis_2[0] / basis_2_norm,
-      @position[1] - 10 * universe_size * basis_2[1] / basis_2_norm,
-      @position[2] - 10 * universe_size * basis_2[2] / basis_2_norm
+      @position[0] - 10 * UNIVERSE_SIZE * basis_2[0] / basis_2_norm,
+      @position[1] - 10 * UNIVERSE_SIZE * basis_2[1] / basis_2_norm,
+      @position[2] - 10 * UNIVERSE_SIZE * basis_2[2] / basis_2_norm
     ]
 
-    positive, negative = partition_polygon(vertices, [universe_size, 0.0, 0.0])
-    positive, negative = partition_polygon(negative, [-universe_size, 0.0, 0.0])
-    positive, negative = partition_polygon(negative, [0.0, universe_size, 0.0])
-    positive, negative = partition_polygon(negative, [0.0, -universe_size, 0.0])
-    positive, negative = partition_polygon(negative, [0.0, 0.0, universe_size])
-    positive, negative = partition_polygon(negative, [0.0, 0.0, -universe_size])
+    positive, negative = partition_polygon(vertices, [UNIVERSE_SIZE, 0.0, 0.0])
+    positive, negative = partition_polygon(negative, [-UNIVERSE_SIZE, 0.0, 0.0])
+    positive, negative = partition_polygon(negative, [0.0, UNIVERSE_SIZE, 0.0])
+    positive, negative = partition_polygon(negative, [0.0, -UNIVERSE_SIZE, 0.0])
+    positive, negative = partition_polygon(negative, [0.0, 0.0, UNIVERSE_SIZE])
+    positive, negative = partition_polygon(negative, [0.0, 0.0, -UNIVERSE_SIZE])
     negative
   end
 
@@ -107,6 +142,16 @@ class Node
       recursive_partition_for_positive(other),
       recursive_partition_for_negative(other)
     ]
+  end
+
+  def partition_cell(cell)
+    vertices = []
+    cell.each do |f|
+      f.each do |e|
+        vertices += e
+      end
+    end
+    labeled_vertices = vertices.uniq.map{|v| [v, on_positive_side?(v)]}
   end
 
   def partition_polygon(vertices, position = nil)
@@ -145,6 +190,18 @@ class Node
       positive, negative = other_node.split(@position, other_node.label, other_node.label)
       @positive.recursively_copy_into(positive)
       @negative.recursively_copy_into(negative)
+    end
+  end
+
+  def recursive_partition_cells(cells, i)
+    if @boundary
+      positive, negative = partition_cell(cells[i])
+      cells[i] = nil # Todo - need better data structures here
+      cells << positive
+      cells << negative
+      initial_size = cells.size # This could in theory change during subsequent operations, so need to keep stable
+      @positive.recursive_partition_cells(cells, initial_size - 2)
+      @negative.recursive_partition_cells(cells, initial_size - 1)
     end
   end
 
