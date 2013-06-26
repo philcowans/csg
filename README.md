@@ -1,3 +1,3 @@
-* Constructive Solid Geometry
+# Constructive Solid Geometry
 
 Experimenting with how to represent solid shapes in code...
