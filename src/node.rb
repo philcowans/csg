@@ -18,39 +18,52 @@ class Node
 
   def intersect_with_universe
     universe_size = 10000.0
+
+    if (@position[1] == 0) && (@position[2] == 0)
+      basis_1 = [0.0, 1.0, 0.0]
+    else
+      basis_1 = [1.0, 0.0, 0.0]
+    end
+
+    position_length = Math.sqrt(dot(@position, @position))
+
+    basis_1_overlap = dot(basis_1, @position) / position_length
     basis_1 = [
-      @position[1],
-      -@position[0],
-      0.0
+      basis_1[0] - basis_1_overlap * @position[0],
+      basis_1[1] - basis_1_overlap * @position[1],
+      basis_1[2] - basis_1_overlap * @position[2]
     ]
     basis_1_norm = Math.sqrt(dot(basis_1, basis_1))
+
     basis_2 = [
-      1.0,
-      @position[1] / @position[0],
-      - @position[0] / @position[2] - (@position[1] * @position[1]) / (@position[0] * @position[2])
-    ]
+      @position[1] * basis_1[2] - @position[2] * basis_1[1],
+      @position[2] * basis_1[0] - @position[0] * basis_1[2],
+      @position[0] * basis_1[1] - @position[1] * basis_1[0]
+     ]
     basis_2_norm = Math.sqrt(dot(basis_2, basis_2))
+
     vertices = []
     vertices << [
-      @position[0] + 10 * universe_size * basis_1[0],
-      @position[1] + 10 * universe_size * basis_1[1],
-      @position[2] + 10 * universe_size * basis_1[2]
+      @position[0] + 10 * universe_size * basis_1[0] / basis_1_norm,
+      @position[1] + 10 * universe_size * basis_1[1] / basis_1_norm,
+      @position[2] + 10 * universe_size * basis_1[2] / basis_1_norm
     ]
     vertices << [
-      @position[0] + 10 * universe_size * basis_2[0],
-      @position[1] + 10 * universe_size * basis_2[1],
-      @position[2] + 10 * universe_size * basis_2[2]
+      @position[0] + 10 * universe_size * basis_2[0] / basis_2_norm,
+      @position[1] + 10 * universe_size * basis_2[1] / basis_2_norm,
+      @position[2] + 10 * universe_size * basis_2[2] / basis_2_norm
     ]
     vertices << [
-      @position[0] - 10 * universe_size * basis_1[0],
-      @position[1] - 10 * universe_size * basis_1[1],
-      @position[2] - 10 * universe_size * basis_1[2]
+      @position[0] - 10 * universe_size * basis_1[0] / basis_1_norm,
+      @position[1] - 10 * universe_size * basis_1[1] / basis_1_norm,
+      @position[2] - 10 * universe_size * basis_1[2] / basis_1_norm
     ]
     vertices << [
-      @position[0] - 10 * universe_size * basis_2[0],
-      @position[1] - 10 * universe_size * basis_2[1],
-      @position[2] - 10 * universe_size * basis_2[2]
+      @position[0] - 10 * universe_size * basis_2[0] / basis_2_norm,
+      @position[1] - 10 * universe_size * basis_2[1] / basis_2_norm,
+      @position[2] - 10 * universe_size * basis_2[2] / basis_2_norm
     ]
+
     positive, negative = partition_polygon(vertices, [universe_size, 0.0, 0.0])
     positive, negative = partition_polygon(negative, [-universe_size, 0.0, 0.0])
     positive, negative = partition_polygon(negative, [0.0, universe_size, 0.0])
@@ -60,9 +73,10 @@ class Node
     negative
   end
 
-  def on_positive_side?(p)
-    position_length = Math.sqrt(dot(@position, @position))
-    d = dot(p, @position) / position_length
+  def on_positive_side?(p, position = nil)
+    position ||= @position
+    position_length = Math.sqrt(dot(position, position))
+    d = dot(p, position) / position_length
     if d > position_length
       true
     elsif d < position_length
@@ -83,7 +97,7 @@ class Node
     position ||= @position
     positive_vertices = []
     negative_vertices = []
-    labeled_vertices = vertices.map{|v| [v, on_positive_side?(v)]}
+    labeled_vertices = vertices.map{|v| [v, on_positive_side?(v, position)]}
     labeled_vertices.each_with_index do |v, i|
       next_vertex = labeled_vertices[(i+1) % labeled_vertices.size]
       if v.last.nil?
