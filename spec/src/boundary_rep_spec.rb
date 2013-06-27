@@ -24,6 +24,8 @@ describe BoundaryRep do
       boundary_rep = BoundaryRep.new(10000.0)
       boundary_rep.partition_by_bsp_tree!(root)
 
+      raise 'This test is failing because we don\'t yet understand the difference between interior and exterior cells'
+
       boundary_rep.polygons.size.should == 12
 
       boundary_rep.polygons.map{|p| p.map{|v| v[0]}}.flatten.uniq.sort.should == [1.0, 10000.0]

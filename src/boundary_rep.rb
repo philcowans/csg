@@ -12,6 +12,10 @@ class BoundaryRep
       @coordinates = [x, y, z]
     end
 
+    def [](i)
+      @coordinates[i]
+    end
+
     def classify(boundary)
       boundary_length = Math.sqrt(Vertex.dot(boundary, boundary))
       d = Vertex.dot(@coordinates, boundary) / boundary_length
@@ -26,49 +30,117 @@ class BoundaryRep
   end
 
   class Edge
+    class << self
+      def dot(a,b)
+        a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+      end
+    end
+
     attr_reader :vertices
 
     def initialize(v1, v2)
       @vertices = [v1, v2]
     end
 
+    def classify(boundary)
+      classes = @vertices.map{|v| v.classify(boundary)}
+      if classes.all?{|c| c == :on_boundary}
+        :on_boundary
+      elsif !(classes.any?{|c| c == :negative})
+        :positive
+      elsif !(classes.any?{|c| c == :positive})
+        :negative
+      else
+        :both
+      end
+    end
+
+    def faces(all_cells)
+      all_faces = all_cells.map{|c| c.faces}.flatten.uniq
+      all_faces.select{|f| f.edges.include?(self)}
+    end
+
     def partition(boundary)
       classes = @vertices.map{|v| v.classify(boundary)}
+
+      f = (Edge.dot(boundary, boundary) - Edge.dot(@vertices[0], boundary)) /
+        (Edge.dot(@vertices[1], boundary) - Edge.dot(@vertices[0], boundary))
+      additional_vertex = Vertex.new((1-f) * @vertices[0][0] + f * @vertices[1][0],
+                                 (1-f) * @vertices[0][1] + f * @vertices[1][1],
+                                 (1-f) * @vertices[0][2] + f * @vertices[1][2])
+      if (classes[0] == :positive) && (classes[1] == :negative)
+        {
+          :positive => Edge.new(@vertices[0], additional_vertex),
+          :negative => Edge.new(additional_vertex, @vertices[1])
+        }
+      elsif (classes[0] == :negative) && (classes[1] == :positive)
+        {
+          :positive => Edge.new(additional_vertex, @vertices[1]),
+          :negative => Edge.new(@vertices[0], additional_vertex)
+        }
+      else
+        raise 'Attempting to partition edge which doesn\'t span boundary'
+      end
     end
   end
 
   class Face
+    attr_reader :edges
+
     def initialize(edges)
       @edges = edges
     end
 
-    def partition(boundary)
-      positive = []
-      negative = []
-      added_vertices = []
+    def boundary?
+      true
+    end
 
-      @edges.each do |edge|
-        p, n, a = edge.partition(boundary)
-        positive << p
-        negative << n
-        added_vertices << a unless a.nil?
-      end
+    def cells(all_cells)
+      all_cells.select{|c| c.faces.include?(self)}
+    end
 
-      if added_vertices.empty?
-        closure_edge = nil
+    def classify(boundary)
+      classes = @edges.map{|e| e.classify(boundary)}
+      if classes.all?{|c| c == :on_boundary}
+        :on_boundary
+      elsif classes.all?{|c| (c == :positive) || (c == :on_boundary)}
+        :positive
+      elsif classes.all?{|c| (c == :negative) || (c == :on_boundary)}
+        :negative
       else
-        unless added_vertices.size == 2
-          raise "Expected either 0 or 2 vertices on boundary, got #{added_vertices.size}"
-        end
-        closure_edge = Edge.new(added_vertices[0], added_vertices[1])
-        positive << closure_edge
-        negative << closure_edge
+        :both
       end
+    end
 
-      # TODO: Need to handle case where vertices lie on boundary (TESTS!)
-      # TODO: Actually need to update edge lists, including for other faces sharing an edge
+    def partition(boundary, all_cells)
+      edges_with_classes = @edges.map{|e| [e, e.classify(boundary)]}
+      edges_with_classes.select{|e| e.last == :both}.map{|e| e.first}.each do |e|
+        result = e.partition(boundary)
+        @edges.delete(e) # FIXME - is it important to preserve ordering here?
+        @edges << result[:positive]
+        @edges << result[:negative]
+        e.faces(all_cells).each do |f|
+          f.replace_edge(e, [result[:positive], result[:negative]]) unless e == self
+        end
+      end
+      edges_with_classes = @edges.map{|e| [e, e.classify(boundary)]}
+      positive = edges_with_classes.select{|e| e.last == :positive}.map{|e| e.first}
+      negative = edges_with_classes.select{|e| e.last == :negative}.map{|e| e.first}
+      if positive.empty? || negative.empty?
+        raise 'Attempting to partition face which doesn\'t span boundary'
+      else
+        vertices_with_classes = positive.map{|e| e.vertices}.flatten.uniq.map{|v| [v, v.classify(boundary)]}
+        boundary_vertices = vertices_with_classes.select{|v| v.last == :on_boundary}.map{|v| v.first}
+        raise 'Expected exactly 2 boundary vertices' unless boundary_vertices.size == 2
+        boundary_face = Edge.new(boundary_vertices[0], boundary_vertices[1])
+        positive << boundary_face
+        negative << boundary_face
 
-      [positive, negative, closure_edge]
+        {
+          :positive => Face.new(positive),
+          :negative => Face.new(negative)
+        }
+      end
     end
 
     def polygons
@@ -80,49 +152,52 @@ class BoundaryRep
       end
       p
     end
+
+    def replace_edge(old, new)
+      @edges.delete(old)
+      new.each{|e| @edges << e}
+    end
   end
 
   class Cell
+    attr_reader :faces
+
     def initialize(faces)
       @faces = faces
     end
 
-    def partition(boundary)
-      positive = []
-      negative = []
-      added_edges = []
-
-      @faces.each do |face|
-        p, n, a = face.partition(boundary)
-        positive << p
-        negative << n
-        added_edges << a unless a.nil?
+    def partition(boundary, all_cells)
+      faces_with_classes = @faces.map{|f| [f, f.classify(boundary)]}
+      faces_with_classes.select{|f| f.last == :both}.map{|f| f.first}.each do |f|
+        result = f.partition(boundary, all_cells)
+        @faces.delete(f)
+        @faces << result[:positive]
+        @faces << result[:negative]
+        f.cells(all_cells).each do |c|
+          c.replace_face(f, [result[:positive], result[:negative]]) unless c == self
+        end
       end
+      faces_with_classes = @faces.map{|f| [f, f.classify(boundary)]}
+      # Silently ignore attempts to partition along an existing face
+      return nil if faces_with_classes.any?{|f| f.last == :on_boundary}
+      positive = faces_with_classes.select{|f| f.last == :positive}.map{|f| f.first}
+      negative = faces_with_classes.select{|f| f.last == :negative}.map{|f| f.first}
 
-      unless added_edges.empty?
-        closure_face = Face.new(added_edges)
-        positive << closure_face
-        negative << closure_face
-      end
+      edges_with_classes = positive.map{|f| f.edges}.flatten.uniq.map{|e| [e, e.classify(boundary)]}
+      boundary_edges = edges_with_classes.select{|e| e.last == :on_boundary}.map{|e| e.first}
+      boundary_face = Face.new(boundary_edges)
+      positive << boundary_face
+      negative << boundary_face
 
-      if negative.empty? or positive.empty?
-        {
-          :delete => [],
-          :add => nil
-        }
-      else
-        {
-          :delete => [self],
-          :add => {
-            :positive => Cell.new(positive),
-            :negative => Cell.new(negative)
-          }
-        }
-      end
+      {
+        :positive => Cell.new(positive),
+        :negative => Cell.new(negative)
+      }
     end
 
-    def polygons
-      @faces.map{|f| f.polygons}.flatten(1)
+    def replace_face(old, new)
+      @faces.delete(old)
+      new.each{|f| @faces << f}
     end
   end
 
@@ -164,20 +239,22 @@ class BoundaryRep
   end
 
   def polygons
-    @cells.map{|c| c.polygons}.flatten(1)
+    faces = @cells.map{|c| c.faces}.flatten.uniq
+    puts faces.inspect
+    faces.select{|f| f.boundary?}.map{|f| f.polygons}.flatten(1)
   end
 
   private
 
   def recursive_partition_by_bsp_tree(node, cell)
     if node.boundary
-      result = cell.partition(node.position)
-      result[:delete].each{|c| @cells.delete(c)}
-      if result[:add]
-        @cells << result[:add][:positive]
-        @cells << result[:add][:negative]
-        recursive_partition_by_bsp_tree(node.positive, result[:add][:positive])
-        recursive_partition_by_bsp_tree(node.negative, result[:add][:negative])
+      result = cell.partition(node.position, @cells)
+      if result
+        @cells.delete(cell)
+        @cells << result[:positive]
+        @cells << result[:negative]
+        recursive_partition_by_bsp_tree(node.positive, result[:positive])
+        recursive_partition_by_bsp_tree(node.negative, result[:negative])
       end
     end
   end
