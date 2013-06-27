@@ -1,6 +1,6 @@
 class Node
   attr_accessor :label
-  attr_reader :boundary, :parent, :parent_positive, :position
+  attr_reader :boundary, :negative, :parent, :parent_positive, :position, :positive
 
   UNIVERSE_SIZE = 10000.0
 
@@ -151,7 +151,26 @@ class Node
         vertices += e
       end
     end
-    labeled_vertices = vertices.uniq.map{|v| [v, on_positive_side?(v)]}
+    labeled_vertices = {}
+    vertices.uniq.each{|v| labeled_vertices[v] = on_positive_side?(v)}
+    spanning_edges = []
+    cell.each do |f|
+      f.each do |e|
+        if ((e[0] == true) && (e[1] == false)) || ((e[1] == true) && (e[0] == false))
+          f = (dot(@position, @position) - dot(e[0], @position)) /
+            (dot(e[1], @position) - dot(e[0], @position))
+          intersect = [
+            (1-f) * e[0][0] + f * e[1][0],
+            (1-f) * e[0][1] + f * e[1][1],
+            (1-f) * e[0][2] + f * e[1][2]
+          ]
+          # Create new vertex at intersect
+          # Add new edges
+          # Update appropriate faces
+          # Delete old edge
+        end
+      end
+    end
   end
 
   def partition_polygon(vertices, position = nil)

@@ -6,6 +6,7 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
 $:.unshift(File.dirname(__FILE__) + '/../src/')
+require 'boundary_rep'
 require 'node'
 
 RSpec.configure do |config|
