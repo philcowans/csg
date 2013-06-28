@@ -2,6 +2,8 @@ require './cuboid'
 require './node'
 
 class Corner
+  attr_reader :parts
+
   def initialize
     @params = {
       :material_thickness => 3.0,
@@ -25,7 +27,7 @@ class Corner
                        @params[:base_size],
                        @params[:material_thickness] + @params[:base_overhang] + 2 * @params[:side_thickness],
                        @params[:side_height] + @params[:material_thickness] + 2 * @params[:side_thickness]),
-      :side => Cuboid.new([@params[:base_overhang] / 2.0, base_translation_xy, side_translation_z],
+      :side => Cuboid.new([-(@params[:base_overhang] / 2.0), base_translation_xy, side_translation_z],
                       @params[:material_thickness] + @params[:base_overhang] + 2 * @params[:side_thickness],
                       @params[:base_size],
                       @params[:side_height] + @params[:material_thickness] + 2 * @params[:side_thickness])
@@ -34,9 +36,13 @@ class Corner
 
   def root
     root = Node.new(false)
-    root.union!(@parts[:base].root)
+    #root.union!(@parts[:base].root)
+    #root.union!(@parts[:front].root)
+    #puts @parts[:front].root.leaf_count
+    #puts @parts[:side].root.leaf_count
     root.union!(@parts[:front].root)
-    # root.union!(@parts[:side].root)
+    root.union!(@parts[:side].root)
+    #puts root.leaf_count
     root
   end
 end

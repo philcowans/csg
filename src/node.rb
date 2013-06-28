@@ -1,10 +1,11 @@
 class Node
   attr_accessor :label
-  attr_reader :boundary, :negative, :parent, :parent_positive, :position, :positive
+  attr_reader :boundary, :name, :negative, :parent, :parent_positive, :position, :positive
 
   UNIVERSE_SIZE = 10000.0
 
-  def initialize(label, parent = nil, parent_positive = nil)
+  def initialize(label, parent = nil, parent_positive = nil, name = '')
+    @name = name
     @label = label
     @positive = nil
     @negative = nil
@@ -140,6 +141,7 @@ class Node
 
   def recursively_copy_into(other_node)
     if @position.nil?
+      # puts "Labeling (ntersection of #{other_node.name} and #{@name}): #{other_node.label}, #{@label}"
       other_node.label = other_node.label || @label
     else
       positive, negative = other_node.split(@position, other_node.label, other_node.label)
@@ -210,18 +212,21 @@ class Node
       end
     end
 
-    @positive = Node.new(label_positive, self, true)
-    @negative = Node.new(label_negative, self, false)
+    @positive = Node.new(label_positive, self, true, @name + 'P')
+    @negative = Node.new(label_negative, self, false, @name + 'N')
     [@positive, @negative]
   end
 
   def union!(other_tree)
+    # puts "Computing union for #{other_tree.name} and #{@name}"
     if @position
       # This is a branch node, so partition the other tree and recursively apply
       positive_other_tree, negative_other_tree = other_tree.partition(self)
+      # puts "Propagating: #{positive_other_tree}, #{negative_other_tree}"
       @positive.union!(positive_other_tree)
       @negative.union!(negative_other_tree)
     else
+      # puts "Copying #{other_tree.name} into #{@name}:"
       other_tree.recursively_copy_into(self)
     end
   end

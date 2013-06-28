@@ -81,5 +81,17 @@ describe Node do
         root1.leaf_count.should == 4
       end
     end
+
+    context 'for trees with a common boundary' do
+      it 'should correctly merge' do
+        root1 = Node.new(false)
+        positive, negative = root1.split([1.0, 0.0, 0.0], false, false)
+        negative.split([0.0, 1.0, 0.0], false, false)
+        root2 = Node.new(false)
+        root2.split([1.0, 0.0, 0.0], false, false)
+        root2.union!(root1)
+        root2.leaf_count.should == 3
+      end
+    end
   end
 end

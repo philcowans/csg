@@ -92,7 +92,9 @@ class BoundaryRep
     end
 
     def boundary?(all_cells)
+#      return true
       adjacent_cells = cells(all_cells)
+##      puts adjacent_cells.map{|l| l.label}.inspect
       if adjacent_cells.size == 1
         # (we're on the boundary of the universe)
         adjacent_cells.first.label
@@ -153,6 +155,7 @@ class BoundaryRep
 
     def polygons
       vertices = @edges.map{|e| e.vertices}
+      return [] if vertices.size < 3
       v = vertices.first.first
       ordered_vertices = []
       while v
@@ -205,7 +208,8 @@ class BoundaryRep
       end
       faces_with_classes = @faces.map{|f| [f, f.classify(boundary)]}
       # Silently ignore attempts to partition along an existing face
-      return nil if faces_with_classes.any?{|f| f.last == :on_boundary}
+      return :positive_non_partition unless faces_with_classes.any?{|f| f.last == :negative}
+      return :negative_non_partition unless faces_with_classes.any?{|f| f.last == :positive}
       positive = faces_with_classes.select{|f| f.last == :positive}.map{|f| f.first}
       negative = faces_with_classes.select{|f| f.last == :negative}.map{|f| f.first}
 
@@ -265,8 +269,11 @@ class BoundaryRep
   end
 
   def polygons
+#    puts @cells.size
+#    puts @cells.map{|c| c.label}.inspect
     faces = @cells.map{|c| c.faces}.flatten.uniq
-    faces.select{|f| f.boundary?(@cells)}.map{|f| f.polygons}.flatten(1)
+    p = faces.select{|f| f.boundary?(@cells)}.map{|f| f.polygons}.flatten(1)
+    p.select{|i| i.all?{|v| v.all?{|c| c.abs < 100.0}}}
   end
 
   private
@@ -274,7 +281,12 @@ class BoundaryRep
   def recursive_partition_by_bsp_tree(node, cell)
     if node.boundary
       result = cell.partition(node.position, @cells)
-      if result
+      if result == :negative_non_partition
+        recursive_partition_by_bsp_tree(node.negative, cell)
+      elsif result == :positive_non_partition
+        recursive_partition_by_bsp_tree(node.positive, cell)
+      elsif result.nil?
+      else
         @cells.delete(cell)
         @cells << result[:positive]
         @cells << result[:negative]
@@ -282,6 +294,7 @@ class BoundaryRep
         recursive_partition_by_bsp_tree(node.negative, result[:negative])
       end
     else
+    #  puts "Assignment: #{node.label.inspect}"
       cell.label = node.label
     end
   end

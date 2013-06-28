@@ -4,10 +4,25 @@ require './corner'
 require 'rvg/rvg'
 
 c = Corner.new
+# boundary_rep = BoundaryRep.new(10000.0)
+# boundary_rep.partition_by_bsp_tree!(c.parts[:front].root)
+# polygons = boundary_rep.polygons
+
+# boundary_rep = BoundaryRep.new(10000.0)
+# boundary_rep.partition_by_bsp_tree!(c.parts[:side].root)
+# polygons += boundary_rep.polygons
+
+# boundary_rep = BoundaryRep.new(10000.0)
+# boundary_rep.partition_by_bsp_tree!(c.parts[:base].root)
+# polygons += boundary_rep.polygons
+
+root = c.root
 
 boundary_rep = BoundaryRep.new(10000.0)
-boundary_rep.partition_by_bsp_tree!(c.root)
+boundary_rep.partition_by_bsp_tree!(root)
 polygons = boundary_rep.polygons
+
+# puts root.interior_leaf_count
 
 name = "test"
 
