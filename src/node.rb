@@ -14,41 +14,6 @@ class Node
     @parent_positive = parent_positive
   end
 
-  def boundary_representation
-    v_ppp = [UNIVERSE_SIZE, UNIVERSE_SIZE, UNIVERSE_SIZE]
-    v_ppm = [UNIVERSE_SIZE, UNIVERSE_SIZE, -UNIVERSE_SIZE]
-    v_pmp = [UNIVERSE_SIZE, -UNIVERSE_SIZE, UNIVERSE_SIZE]
-    v_pmm = [UNIVERSE_SIZE, -UNIVERSE_SIZE, -UNIVERSE_SIZE]
-    v_mpp = [-UNIVERSE_SIZE, UNIVERSE_SIZE, UNIVERSE_SIZE]
-    v_mpm = [-UNIVERSE_SIZE, UNIVERSE_SIZE, -UNIVERSE_SIZE]
-    v_mmp = [-UNIVERSE_SIZE, -UNIVERSE_SIZE, UNIVERSE_SIZE]
-    v_mmm = [-UNIVERSE_SIZE, -UNIVERSE_SIZE, -UNIVERSE_SIZE]
-
-    e_xpp = [v_ppp, v_mpp]
-    e_xpm = [v_ppm, v_mpm]
-    e_xmp = [v_pmp, v_ppm]
-    e_xmm = [v_pmm, v_mmm]
-    e_pxp = [v_ppp, v_pmp]
-    e_pxm = [v_ppm, v_pmm]
-    e_mxp = [v_mpp, v_mmp]
-    e_mxm = [v_mpm, v_mmm]
-    e_ppx = [v_ppp, v_ppm]
-    e_pmx = [v_pmp, v_pmm]
-    e_mpx = [v_mpp, v_mpm]
-    e_mmx = [v_mmp, v_mmm]
-
-    f_xp = [e_pxp, e_pxm, e_ppx, e_pmx]
-    f_xm = [e_mxp, e_mxm, e_mpx, e_mmx]
-    f_yp = [e_xpp, e_xpm, e_ppx, e_mpx]
-    f_ym = [e_xmp, e_xmm, e_pmx, e_mmx]
-    f_zp = [e_xpp, e_xmp, e_pxp, e_mxp]
-    f_zm = [e_xpm, e_xmm, e_pxm, e_mxm]
-
-    cells = [[f_xp, f_xm, f_yp, f_ym, f_zp, f_zm]]
-
-    recursive_partition_cells(cells, 0)
-  end
-
   def dot(a, b)
     (a[0] * b[0]) + (a[1] * b[1]) + (a[2] * b[2])
   end
@@ -144,35 +109,6 @@ class Node
     ]
   end
 
-  def partition_cell(cell)
-    vertices = []
-    cell.each do |f|
-      f.each do |e|
-        vertices += e
-      end
-    end
-    labeled_vertices = {}
-    vertices.uniq.each{|v| labeled_vertices[v] = on_positive_side?(v)}
-    spanning_edges = []
-    cell.each do |f|
-      f.each do |e|
-        if ((e[0] == true) && (e[1] == false)) || ((e[1] == true) && (e[0] == false))
-          f = (dot(@position, @position) - dot(e[0], @position)) /
-            (dot(e[1], @position) - dot(e[0], @position))
-          intersect = [
-            (1-f) * e[0][0] + f * e[1][0],
-            (1-f) * e[0][1] + f * e[1][1],
-            (1-f) * e[0][2] + f * e[1][2]
-          ]
-          # Create new vertex at intersect
-          # Add new edges
-          # Update appropriate faces
-          # Delete old edge
-        end
-      end
-    end
-  end
-
   def partition_polygon(vertices, position = nil)
     position ||= @position
     positive_vertices = []
@@ -209,18 +145,6 @@ class Node
       positive, negative = other_node.split(@position, other_node.label, other_node.label)
       @positive.recursively_copy_into(positive)
       @negative.recursively_copy_into(negative)
-    end
-  end
-
-  def recursive_partition_cells(cells, i)
-    if @boundary
-      positive, negative = partition_cell(cells[i])
-      cells[i] = nil # Todo - need better data structures here
-      cells << positive
-      cells << negative
-      initial_size = cells.size # This could in theory change during subsequent operations, so need to keep stable
-      @positive.recursive_partition_cells(cells, initial_size - 2)
-      @negative.recursive_partition_cells(cells, initial_size - 1)
     end
   end
 

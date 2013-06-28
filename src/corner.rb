@@ -36,7 +36,7 @@ class Corner
     root = Node.new(false)
     root.union!(@parts[:base].root)
     root.union!(@parts[:front].root)
-    root.union!(@parts[:side].root)
+    # root.union!(@parts[:side].root)
     root
   end
 end
