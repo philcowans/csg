@@ -139,14 +139,20 @@ class Node
     [positive_vertices, negative_vertices]
   end
 
-  def recursively_copy_into(other_node)
+  def recursively_copy_into(other_node, subtract)
+#    puts "subtract = #{subtract}"
     if @position.nil?
       #puts "Labeling (intersection of #{other_node.name} and #{@name}): #{other_node.label}, #{@label}"
-      other_node.label = other_node.label || @label
+      if subtract
+#        puts "subtracting"
+        other_node.label = other_node.label && (!@label)
+      else
+        other_node.label = other_node.label || @label
+      end
     else
       positive, negative = other_node.split(@position, other_node.label, other_node.label)
-      @positive.recursively_copy_into(positive)
-      @negative.recursively_copy_into(negative)
+      @positive.recursively_copy_into(positive, subtract)
+      @negative.recursively_copy_into(negative, subtract)
     end
   end
 
@@ -217,18 +223,23 @@ class Node
     [@positive, @negative]
   end
 
-  def union!(other_tree)
+  def union!(other_tree, subtract = false)
     #puts "Computing union for #{other_tree.name} into #{@name}"
     if @position
       # This is a branch node, so partition the other tree and recursively apply
       positive_other_tree, negative_other_tree = other_tree.partition(self)
       # puts "Propagating: #{positive_other_tree}, #{negative_other_tree}"
-      @positive.union!(positive_other_tree)
-      @negative.union!(negative_other_tree)
+      @positive.union!(positive_other_tree, subtract)
+      @negative.union!(negative_other_tree, subtract)
     else
       # puts "Copying #{other_tree.name} into #{@name}:"
-      other_tree.recursively_copy_into(self)
+      other_tree.recursively_copy_into(self, subtract)
     end
+  end
+
+  def subtract!(other_tree)
+#    puts "in subtract"
+    union!(other_tree, true)
   end
 
   private

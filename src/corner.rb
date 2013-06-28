@@ -30,7 +30,11 @@ class Corner
       :side => Cuboid.new([-(@params[:base_overhang] / 2.0), base_translation_xy, side_translation_z],
                       @params[:material_thickness] + @params[:base_overhang] + 2 * @params[:side_thickness],
                       @params[:base_size],
-                      @params[:side_height] + @params[:material_thickness] + 2 * @params[:side_thickness])
+                      @params[:side_height] + @params[:material_thickness] + 2 * @params[:side_thickness]),
+      :panel_front => Cuboid.new([@params[:material_thickness]/2.0 + @params[:side_thickness] + @params[:base_size], 0.0, side_translation_z - 1.0],
+                             @params[:base_size] * 3.0,
+                             @params[:material_thickness],
+                             @params[:side_height])
     }
   end
 
@@ -44,6 +48,7 @@ class Corner
     root.union!(@parts[:side].root)
     #puts "Taking union with base"
     root.union!(@parts[:base].root)
+    root.subtract!(@parts[:panel_front].root)
     #puts root.leaf_count
     root
   end

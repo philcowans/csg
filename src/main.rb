@@ -22,6 +22,7 @@ boundary_rep = BoundaryRep.new(10000.0)
 boundary_rep.partition_by_bsp_tree!(root)
 polygons = boundary_rep.polygons
 
+
 # puts root.interior_leaf_count
 
 name = "test"
