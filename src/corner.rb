@@ -42,6 +42,8 @@ class Corner
     #puts @parts[:side].root.leaf_count
     root.union!(@parts[:front].root)
     root.union!(@parts[:side].root)
+    #puts "Taking union with base"
+    root.union!(@parts[:base].root)
     #puts root.leaf_count
     root
   end

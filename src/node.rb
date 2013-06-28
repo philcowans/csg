@@ -94,9 +94,9 @@ class Node
     position ||= @position
     position_length = Math.sqrt(dot(position, position))
     d = dot(p, position) / position_length
-    if d > position_length
+    if d > position_length + 0.01
       true
-    elsif d < position_length
+    elsif d < position_length - 0.01
       false
     else
       nil # Returns nil to indicate
@@ -141,7 +141,7 @@ class Node
 
   def recursively_copy_into(other_node)
     if @position.nil?
-      # puts "Labeling (ntersection of #{other_node.name} and #{@name}): #{other_node.label}, #{@label}"
+      #puts "Labeling (intersection of #{other_node.name} and #{@name}): #{other_node.label}, #{@label}"
       other_node.label = other_node.label || @label
     else
       positive, negative = other_node.split(@position, other_node.label, other_node.label)
@@ -218,7 +218,7 @@ class Node
   end
 
   def union!(other_tree)
-    # puts "Computing union for #{other_tree.name} and #{@name}"
+    #puts "Computing union for #{other_tree.name} into #{@name}"
     if @position
       # This is a branch node, so partition the other tree and recursively apply
       positive_other_tree, negative_other_tree = other_tree.partition(self)

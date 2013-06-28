@@ -94,7 +94,7 @@ class BoundaryRep
     def boundary?(all_cells)
 #      return true
       adjacent_cells = cells(all_cells)
-##      puts adjacent_cells.map{|l| l.label}.inspect
+#      puts adjacent_cells.map{|l| l.label}.inspect
       if adjacent_cells.size == 1
         # (we're on the boundary of the universe)
         adjacent_cells.first.label
