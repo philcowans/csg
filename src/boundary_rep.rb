@@ -19,9 +19,9 @@ class BoundaryRep
     def classify(boundary)
       boundary_length = Math.sqrt(Vertex.dot(boundary, boundary))
       d = Vertex.dot(@coordinates, boundary) / boundary_length
-      if d > boundary_length
+      if d > boundary_length + 0.01
         :positive
-      elsif d < boundary_length
+      elsif d < boundary_length - 0.01
         :negative
       else
         :on_boundary
@@ -91,8 +91,16 @@ class BoundaryRep
       @edges = edges
     end
 
-    def boundary?
-      true
+    def boundary?(all_cells)
+      adjacent_cells = cells(all_cells)
+      if adjacent_cells.size == 1
+        # (we're on the boundary of the universe)
+        adjacent_cells.first.label
+      elsif adjacent_cells.size == 2
+        adjacent_cells.first.label != adjacent_cells.last.label
+      else
+        raise "We somehow had an edge with #{adjacent_cells.size} adjacent cells, should be 1 or 2"
+      end
     end
 
     def cells(all_cells)
@@ -144,11 +152,27 @@ class BoundaryRep
     end
 
     def polygons
-      vertices = @edges.map{|e| e.vertices}.flatten.uniq
+      vertices = @edges.map{|e| e.vertices}
+      v = vertices.first.first
+      ordered_vertices = []
+      while v
+        ordered_vertices << v
+        if vertices.empty?
+          v = nil
+        else
+          anchor_edge = vertices.select{|e| (e.first == v) || (e.last == v)}.first
+          if anchor_edge.first == v
+            v = anchor_edge.last
+          else
+            v = anchor_edge.first
+          end
+          vertices.delete(anchor_edge)
+        end
+      end
       p = []
-      while vertices.size >= 3
-        p << [vertices[0].coordinates, vertices[1].coordinates, vertices[2].coordinates]
-        vertices.delete_at(1)
+      while ordered_vertices.size >= 3
+        p << [ordered_vertices[0].coordinates, ordered_vertices[1].coordinates, ordered_vertices[2].coordinates]
+        ordered_vertices.delete_at(1)
       end
       p
     end
@@ -160,10 +184,12 @@ class BoundaryRep
   end
 
   class Cell
+    attr_accessor :label
     attr_reader :faces
 
     def initialize(faces)
       @faces = faces
+      @label = false
     end
 
     def partition(boundary, all_cells)
@@ -240,8 +266,7 @@ class BoundaryRep
 
   def polygons
     faces = @cells.map{|c| c.faces}.flatten.uniq
-    puts faces.inspect
-    faces.select{|f| f.boundary?}.map{|f| f.polygons}.flatten(1)
+    faces.select{|f| f.boundary?(@cells)}.map{|f| f.polygons}.flatten(1)
   end
 
   private
@@ -256,6 +281,8 @@ class BoundaryRep
         recursive_partition_by_bsp_tree(node.positive, result[:positive])
         recursive_partition_by_bsp_tree(node.negative, result[:negative])
       end
+    else
+      cell.label = node.label
     end
   end
 end
