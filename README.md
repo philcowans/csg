@@ -8,7 +8,7 @@ and a sphere. More information on
 
 There are a few reasons why I want to do this:
 
-* I'm generallyinterested in learning about how to do this kind of
+* I'm generally interested in learning about how to do this kind of
   thing.
 * I want to do 3D modelling, but I don't really want to learn a
   proprietory CAD interface if I can help it.
