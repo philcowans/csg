@@ -92,6 +92,8 @@ class BoundaryRep
     end
 
     def boundary?(all_cells)
+#      return false unless @edges.all?{|e| e.vertices.all?{|v| v.coordinates.all?{|c| c.abs < 100.0}}}
+
 #      return true
       adjacent_cells = cells(all_cells)
 #      puts adjacent_cells.map{|l| l.label}.inspect
@@ -273,7 +275,7 @@ class BoundaryRep
 #    puts @cells.map{|c| c.label}.inspect
     faces = @cells.map{|c| c.faces}.flatten.uniq
     p = faces.select{|f| f.boundary?(@cells)}.map{|f| f.polygons}.flatten(1)
-    p.select{|i| i.all?{|v| v.all?{|c| c.abs < 100.0}}}
+#    p.select{|i| i.all?{|v| v.all?{|c| c.abs < 100.0}}}
   end
 
   private
