@@ -8,8 +8,8 @@ and a sphere. More information on
 
 There are a few reasons why I want to do this:
 
-* Most importantly, I'm interested in learning about how to do this
-  kind of thing.
+* I'm generallyinterested in learning about how to do this kind of
+  thing.
 * I want to do 3D modelling, but I don't really want to learn a
   proprietory CAD interface if I can help it.
 * I'm interested in ways of creating parameterised models, e.g. to
@@ -19,8 +19,10 @@ There are a few reasons why I want to do this:
   change logs via git, etc.
 * It might be fun to generate models programatically.
 
-A couple of papers I'm basing this on:
+A couple of papers this is based on:
 
 * Merging BSP Trees Yields Polyhedral Set Operations, Naylor et. al.,
   Computer Graphics, vol. 24, no. 1, August 1990.
-* Efficient Boundary Extraction of BSP Solids Based on Clipping Operations, Wand and Manocha, IEEE Transations on Visualization and Computer Graphics.
+* Efficient Boundary Extraction of BSP Solids Based on Clipping
+  Operations, Wand and Manocha, IEEE Transations on Visualization and
+  Computer Graphics.
