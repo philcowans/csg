@@ -4,26 +4,11 @@ require './corner'
 require 'rvg/rvg'
 
 c = Corner.new
-# boundary_rep = BoundaryRep.new(10000.0)
-# boundary_rep.partition_by_bsp_tree!(c.parts[:front].root)
-# polygons = boundary_rep.polygons
-
-# boundary_rep = BoundaryRep.new(10000.0)
-# boundary_rep.partition_by_bsp_tree!(c.parts[:side].root)
-# polygons += boundary_rep.polygons
-
-# boundary_rep = BoundaryRep.new(10000.0)
-# boundary_rep.partition_by_bsp_tree!(c.parts[:base].root)
-# polygons += boundary_rep.polygons
-
 root = c.root
 
 boundary_rep = BoundaryRep.new(10000.0)
 boundary_rep.partition_by_bsp_tree!(root)
 polygons = boundary_rep.polygons
-
-
-# puts root.interior_leaf_count
 
 name = "test"
 
@@ -59,19 +44,3 @@ polygons.each do |polygon|
 end
 
 puts "endsolid #{name}"
-
-#puts c.root.inspect
-
-# include Magick
-# RVG::dpi = 72
-
-# rvg = RVG.new(2.5.in, 2.5.in).viewbox(0,0,250,250) do |canvas|
-#   canvas.background_fill = 'white'
-#   canvas.styles(:stroke => 'black')
-#   c.polygons.each do |p|
-#     puts p.inspect
-#     canvas.polyline(p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1])
-#   end
-# end
-
-# rvg.draw.write('output.gif')

@@ -92,11 +92,7 @@ class Node
     end
 
     def boundary?(all_cells)
-#      return false unless @edges.all?{|e| e.vertices.all?{|v| v.coordinates.all?{|c| c.abs < 100.0}}}
-
-#      return true
       adjacent_cells = cells(all_cells)
-#      puts adjacent_cells.map{|l| l.label}.inspect
       if adjacent_cells.size == 1
         # (we're on the boundary of the universe)
         adjacent_cells.first.label
@@ -413,11 +409,8 @@ class Node
   end
 
   def recursively_copy_into(other_node, subtract)
-#    puts "subtract = #{subtract}"
     if @position.nil?
-#      puts "Labeling (intersection of #{other_node.name} and #{@name}): #{other_node.label}, #{@label}"
       if subtract
-#        puts "subtracting"
         other_node.label = other_node.label && (!@label)
       else
         other_node.label = other_node.label || @label
@@ -480,14 +473,14 @@ class Node
     else
       @label = nil
       @position = position # Known issue - this is numerically unstable at origin
-      
+
       parent_nodes = []
       current = self
       while current
         parent_nodes << [current.parent, current.parent_positive] if current.parent
         current = current.parent
       end
-      
+
       @boundary = intersect_with_universe
       parent_nodes.reverse.each do |node|
         positive, negative = node.first.partition_polygon(@boundary)
@@ -506,21 +499,17 @@ class Node
   end
 
   def union!(other_tree, subtract = false)
-#    puts "Computing union for #{other_tree.name} into #{@name}"
     if @position
       # This is a branch node, so partition the other tree and recursively apply
       positive_other_tree, negative_other_tree = other_tree.partition(self)
-#      puts "Propagating: #{positive_other_tree}, #{negative_other_tree}"
       @positive.union!(positive_other_tree, subtract)
       @negative.union!(negative_other_tree, subtract)
     else
-#      puts "Copying #{other_tree.name} into #{@name}:"
       other_tree.recursively_copy_into(self, subtract)
     end
   end
 
   def subtract!(other_tree)
-#    puts "in subtract"
     union!(other_tree, true)
   end
 

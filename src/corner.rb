@@ -40,16 +40,10 @@ class Corner
 
   def root
     root = Node.new(false)
-    #root.union!(@parts[:base].root)
-    #root.union!(@parts[:front].root)
-    #puts @parts[:front].root.leaf_count
-    #puts @parts[:side].root.leaf_count
-    root.union!(@parts[:front].root)    
+    root.union!(@parts[:front].root)
     root.union!(@parts[:side].root)
-    #puts "Taking union with base"
     root.union!(@parts[:base].root)
     root.subtract!(@parts[:panel_front].root)
-    #puts root.interior_leaf_count
     root
   end
 end
